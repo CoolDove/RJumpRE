@@ -3,54 +3,32 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-public class MRope : MonoBehaviour
+public class RopeSimulator : MonoBehaviour
 {
-    public Transform root;
-    public Transform target;
-
     public float gravityScale = 0.5f;
+    public int iteratingTimes = 6;
 
-    [HideInInspector]
-    public List<Point> points = new List<Point>();
-    [HideInInspector]
-    public List<Stick> sticks = new List<Stick>();
+    private List<Point> Points { get => points; }
+    private List<Stick> Sticks { get => sticks; }
 
-    public void Generate(float _length, int _segs) {
-        if (root == null || target == null) return;
+    private List<Point> points = new List<Point>();
+    private List<Stick> sticks = new List<Stick>();
+
+    public void Generate(Vector3 start, Vector3 end, float _length, int _segs) {
         points.Clear();
         sticks.Clear();
 
         float seglength = _length / (float)_segs;
         for (int i = 0; i < _segs; i++) {
-            Vector3 pos = root.position + (target.position - root.position) * (float)i / (float)_segs;
+            Vector3 pos = start + (end - start) * (float)i / (float)_segs;
             bool locked = i == 0 || i == _segs - 1;
             points.Add(new Point(pos, locked));
             
             if (i != 0) sticks.Add(new Stick(points[i - 1], points[i], seglength));
         }
     }
-
-    public void GenSquare() {
-        points.Add(new Point(new Vector3(0, 5, 0)));
-        points.Add(new Point(new Vector3(0, 6, 0)));
-        points.Add(new Point(new Vector3(1, 5, 0)));
-        points.Add(new Point(new Vector3(1, 6, 0.1f)));
-
-        sticks.Add(new Stick(points[0], points[1]));
-        sticks.Add(new Stick(points[1], points[2]));
-        sticks.Add(new Stick(points[2], points[3]));
-        sticks.Add(new Stick(points[3], points[0]));
-
-        sticks.Add(new Stick(points[0], points[2]));
-        sticks.Add(new Stick(points[1], points[3]));
-    }
-
-    private void Start() {
-        Generate(4.0f, 64);
-        // GenSquare();
-    }
-
-    private void Update() {
+    
+    private void Tick() {
         System.Action<Point> collision_check = (Point p) => {
             if (p.locked) return;
 
@@ -104,7 +82,7 @@ public class MRope : MonoBehaviour
         points.ForEach(p => collision_check(p));
     }
 
-    private void OnDrawGizmos() {
+    public void DrawGizmos() {
         Gizmos.color = Color.green;
         for (int i = 0; i < sticks.Count; i++) {
             Gizmos.DrawLine(sticks[i].start.position, sticks[i].end.position);
@@ -141,16 +119,16 @@ public class MRope : MonoBehaviour
         }
     }
 
-    [CustomEditor(typeof(MRope))]
-    public class RopeEditor : Editor
-    {
-        public override void OnInspectorGUI() {
-            base.OnInspectorGUI();
-
-            if (GUILayout.Button("Generate")) {
-                (target as MRope).Generate(16.0f, 32);
-            }
-        }
-    }
+    // [CustomEditor(typeof(MRope))]
+    // public class RopeEditor : Editor
+    // {
+        // public override void OnInspectorGUI() {
+            // base.OnInspectorGUI();
+// 
+            // if (GUILayout.Button("Generate")) {
+                // (target as MRope).Generate(16.0f, 32);
+            // }
+        // }
+    // }
 
 }
