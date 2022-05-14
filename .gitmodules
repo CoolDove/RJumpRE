@@ -1,0 +1,3 @@
+[submodule "RJumpRE/Assets/dools"]
+	path = RJumpRE/Assets/dools
+	url = git@github.com:CoolDove/dools.git
