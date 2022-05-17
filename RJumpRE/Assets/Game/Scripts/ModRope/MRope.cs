@@ -24,9 +24,9 @@ public class MRope : MonoBehaviour
     {
         if (SideA == null || SideB == null) return;
         rope = new Rope();
-        rope.Generate(SideA.position, SideB.position, Vector3.Distance(SideA.position, SideB.position), 16);
+        rope.Generate(SideA.position, SideB.position, Vector3.Distance(SideA.position, SideB.position) * 1.3f, 16);
         pA = rope.Points[0];
-        pB = rope.Points[1];
+        pB = rope.Points[rope.Points.Count - 1];
         rope.Register();
 
         lineRenderer = GetComponent<LineRenderer>();

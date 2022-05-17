@@ -9,8 +9,8 @@ namespace Game
 [GameSystem]
 public class RopeSystem : IGameSystem
 {
-    public float gravityScale = 0.5f;
-    public int iteratingTimes = 6;
+    public float gravityScale = 0.1f;
+    public int iteratingTimes = 8;
 
     public List<Point> Points { get => points; }
     public List<Stick> Sticks { get => sticks; }
@@ -21,6 +21,8 @@ public class RopeSystem : IGameSystem
     public GameMain Game { get; set; }
 
     private List<Rope> ropes = new List<Rope>();
+
+    private float groundHeight = 0;
 
     public void OnInit() {
 
@@ -42,7 +44,10 @@ public class RopeSystem : IGameSystem
     
     private void Update() {
         foreach (var r in ropes) {
-            r.Update();
+            r.UpdatePoints();
+            for (int i = 0; i < iteratingTimes; i++) {
+                r.UpdateConstraints();
+            }
         }
     }
 
@@ -56,6 +61,7 @@ public class RopeSystem : IGameSystem
     {
         public Vector3 position;
         public Vector3 prev_position;
+        public float intertiaFac = 0.85f;
         public bool locked;
 
         public Point(Vector3 _pos, bool _locked = false) {
@@ -106,24 +112,29 @@ public class Rope {
             if (i != 0) sticks.Add(new RopeSystem.Stick(points[i - 1], points[i], seglength));
         }
     }
-    
-    public void Update() {
+
+    public void UpdatePoints() {
         for (int i = 0; i < points.Count; i++) {
             var p = points[i];
             if (p.locked) continue;
             Vector3 posbefore = p.position;
             Vector3 v = (p.position - p.prev_position) * 0.9f + Vector3.down * ropeSys.gravityScale * Time.deltaTime;
-            p.position += v;
+
+            Vector3 intertia = p.position - p.prev_position;
+
+            p.position += Vector3.Lerp(v, intertia, p.intertiaFac);
             p.prev_position = posbefore;
+            p.position.y = Mathf.Clamp(p.position.y, 0.05f, p.position.y);
         }
-        for (int i = 0; i < 6; i++) {
-            foreach (var s in sticks) {
-                if (s.start == null || s.end == null) continue;
-                Vector3 center = (s.start.position + s.end.position) * 0.5f;
-                Vector3 start2end = Vector3.Normalize(s.end.position - s.start.position);
-                if (!s.start.locked) s.start.position = center - start2end * s.length * 0.5f;
-                if (!s.end.locked) s.end.position = center + start2end * s.length * 0.5f;
-            }
+    }
+
+    public void UpdateConstraints() {
+        foreach (var s in sticks) {
+            if (s.start == null || s.end == null) continue;
+            Vector3 center = (s.start.position + s.end.position) * 0.5f;
+            Vector3 start2end = Vector3.Normalize(s.end.position - s.start.position);
+            if (!s.start.locked) s.start.position = center - start2end * s.length * 0.5f;
+            if (!s.end.locked) s.end.position = center + start2end * s.length * 0.5f;
         }
     }
 
