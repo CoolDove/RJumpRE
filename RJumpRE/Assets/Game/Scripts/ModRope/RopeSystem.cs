@@ -10,7 +10,7 @@ namespace Game
 public class RopeSystem : IGameSystem
 {
     public float gravityScale = 0.1f;
-    public int iteratingTimes = 8;
+    public int iteratingTimes = 4;
 
     public List<Point> Points { get => points; }
     public List<Stick> Sticks { get => sticks; }
@@ -22,13 +22,18 @@ public class RopeSystem : IGameSystem
 
     private List<Rope> ropes = new List<Rope>();
 
-    private float groundHeight = 0;
+    private float groundHeight = 0.04f;
 
     public void OnInit() {
-
+        GameMain.GetSystem<EventSystem>().RegEvents(this);
     }
     public void OnRelease() {
+        GameMain.GetSystem<EventSystem>().UnregEvents(this);
+    }
 
+    [GameEventHandler(GameEventType.GameSystemsInited)]
+    public void TestHandler(object param) {
+        Debug.Log("rope system knows that all systems inited");
     }
 
     public void RegisterRope(Rope rope) {
@@ -44,7 +49,7 @@ public class RopeSystem : IGameSystem
     
     private void Update() {
         foreach (var r in ropes) {
-            r.UpdatePoints();
+            r.UpdatePoints(groundHeight);
             for (int i = 0; i < iteratingTimes; i++) {
                 r.UpdateConstraints();
             }
@@ -113,7 +118,7 @@ public class Rope {
         }
     }
 
-    public void UpdatePoints() {
+    public void UpdatePoints(float groundHeight) {
         for (int i = 0; i < points.Count; i++) {
             var p = points[i];
             if (p.locked) continue;
@@ -124,7 +129,7 @@ public class Rope {
 
             p.position += Vector3.Lerp(v, intertia, p.intertiaFac);
             p.prev_position = posbefore;
-            p.position.y = Mathf.Clamp(p.position.y, 0.05f, p.position.y);
+            p.position.y = Mathf.Clamp(p.position.y, groundHeight, p.position.y);
         }
     }
 
